@@ -5,6 +5,10 @@ project(StrokkMC)
 add_executable(StrokkMC src/main.cpp)
 
 set(CMAKE_CXX_STANDARD 23)
+set_target_properties(StrokkMC
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
+)
 
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(libs/glfw EXCLUDE_FROM_ALL)
