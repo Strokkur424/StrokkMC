@@ -42,7 +42,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - with: 
+      with: 
         submodules: true
     - name: Checkout submodules
       id: git
