@@ -48,8 +48,7 @@ jobs:
     - name: Checkout submodules
       id: git
       run: |
-        cmake -P {0}
-        if (${{github.ref}} MATCHES "tags/v(.*)")
+        cmake -P if (${{github.ref}} MATCHES "tags/v(.*)")
             file(APPEND "$ENV{GITHUB_OUTPUT}" "tag=${CMAKE_MATCH_1}\n")
         else()
             file(APPEND "$ENV{GITHUB_OUTPUT}" "tag=${{github.run_id}}\n")
@@ -57,8 +56,7 @@ jobs:
 
     - name: Download Ninja and CMake
       run: |
-        cmake -P {0}
-        set(cmake_version $ENV{CMAKE_VERSION})
+        cmake -P set(cmake_version $ENV{CMAKE_VERSION})
         set(ninja_version $ENV{NINJA_VERSION})
 
         message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
@@ -103,8 +101,7 @@ jobs:
     - name: Download ccache
       id: ccache
       run: |
-        cmake -P {0}
-        if ("${{ runner.os }}" STREQUAL "Windows")
+        cmake -P if ("${{ runner.os }}" STREQUAL "Windows")
           set(ccache_dir "ccache-$ENV{CCACHE_VERSION}-windows-x86_64")
           set(ccache_archive "${ccache_dir}.zip")
         elseif ("${{ runner.os }}" STREQUAL "Linux")
@@ -134,8 +131,7 @@ jobs:
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
       run: |
-        cmake -P {0}
-        string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+        cmake -P string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
         file(APPEND "$ENV{GITHUB_OUTPUT}" "timestamp=${current_date}")
 
     - name: ccache cache files
@@ -148,8 +144,7 @@ jobs:
 
     - name: Configure
       run: |
-        cmake -P {0}
-        set(ENV{CC} ${{ matrix.config.cc }})
+        cmake -P set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
@@ -189,8 +184,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -P {0}
-        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+        cmake -P set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
           file(STRINGS environment_script_output.txt output_lines)
