@@ -18,45 +18,44 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - name: "Windows Latest MSVC" 
-          artifact: "Windows-MSVC"
-          os: windows-latest
-          cc: "cl"
-          cxx: "cl"
-          environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          
-        - name: "Windows Latest MinGW"
-          artifact: "Windows-MinGW"
-          os: windows-latest
-          cc: "gcc"
-          cxx: "g++"
-          
-        - name: "Ubuntu Latest GCC"
-          artifact: "Linux"
-          os: ubuntu-latest
-          cc: "gcc"
-          cxx: "g++"
-
-        - name: "macOS Latest Clang"
-          artifact: "macOS"
-          os: macos-latest
-          cc: "clang"
-          cxx: "clang++"    
+        - {
+            name: "Windows Latest MSVC", artifact: "Windows-MSVC",
+            os: windows-latest,
+            cc: "cl", cxx: "cl",
+            environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          }
+        - {
+            name: "Windows Latest MinGW", artifact: "Windows-MinGW",
+            os: windows-latest,
+            cc: "gcc", cxx: "g++"
+          }
+        - {
+            name: "Ubuntu Latest GCC", artifact: "Linux",
+            os: ubuntu-latest,
+            cc: "gcc", cxx: "g++"
+          }
+        - {
+            name: "macOS Latest Clang", artifact: "macOS",
+            os: macos-latest,
+            cc: "clang", cxx: "clang++"
+          }
 
     steps:
     - uses: actions/checkout@v4
     - name: Checkout submodules
       id: git
+      shell: cmake -P {0}
       run: |
-        cmake -P if (${{github.ref}} MATCHES "tags/v(.*)")
+        if (${{github.ref}} MATCHES "tags/v(.*)")
             file(APPEND "$ENV{GITHUB_OUTPUT}" "tag=${CMAKE_MATCH_1}\n")
         else()
             file(APPEND "$ENV{GITHUB_OUTPUT}" "tag=${{github.run_id}}\n")
         endif()
 
     - name: Download Ninja and CMake
+      shell: cmake -P {0}
       run: |
-        cmake -P set(cmake_version $ENV{CMAKE_VERSION})
+        set(cmake_version $ENV{CMAKE_VERSION})
         set(ninja_version $ENV{NINJA_VERSION})
 
         message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
@@ -100,8 +99,9 @@ jobs:
 
     - name: Download ccache
       id: ccache
+      shell: cmake -P {0}
       run: |
-        cmake -P if ("${{ runner.os }}" STREQUAL "Windows")
+        if ("${{ runner.os }}" STREQUAL "Windows")
           set(ccache_dir "ccache-$ENV{CCACHE_VERSION}-windows-x86_64")
           set(ccache_archive "${ccache_dir}.zip")
         elseif ("${{ runner.os }}" STREQUAL "Linux")
@@ -130,8 +130,9 @@ jobs:
 
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
+      shell: cmake -P {0}
       run: |
-        cmake -P string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+        string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
         file(APPEND "$ENV{GITHUB_OUTPUT}" "timestamp=${current_date}")
 
     - name: ccache cache files
@@ -143,8 +144,9 @@ jobs:
           ${{ matrix.config.name }}-ccache-
 
     - name: Configure
+      shell: cmake -P {0}
       run: |
-        cmake -P set(ENV{CC} ${{ matrix.config.cc }})
+        set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
@@ -183,8 +185,9 @@ jobs:
 
 
     - name: Build
+      shell: cmake -P {0}
       run: |
-        cmake -P set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
           file(STRINGS environment_script_output.txt output_lines)
@@ -223,8 +226,8 @@ jobs:
         endif()
 
     - name: ccache statistics
+      shell: cmake -P {0}
       run: |
-        cmake -P {0}
         file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
         set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
         set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
@@ -232,8 +235,8 @@ jobs:
         execute_process(COMMAND ccache -s)
 
     - name: Run tests
+      shell: cmake -P {0}
       run: |
-        cmake -P {0}
         include(ProcessorCount)
         ProcessorCount(N)
 
