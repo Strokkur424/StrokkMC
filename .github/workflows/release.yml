@@ -1,0 +1,26 @@
+name: Upload files to release
+
+on: [release]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release-with-dirs
+
+    - name: Fixup artifacts
+      run: |
+        mkdir release
+        mv release-with-dirs/*/* release/
+
+    - name: Upload files
+      uses: irongut/EditRelease@v1.2.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        id: ${{ github.event.release.id }}
+        files: release/*        
+        prerelease: false
