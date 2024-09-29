@@ -273,31 +273,3 @@ jobs:
       with:
         path: ./${{ matrix.config.artifact }}-${{ steps.git.outputs.tag }}.7z
         name: ${{ matrix.config.artifact }}-${{ steps.git.outputs.tag }}.7z
-
-
-  release:
-    if: contains(github.ref, 'tags/v')
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: release-with-dirs
-
-    - name: Fixup artifacts
-      run: |
-        mkdir release
-        mv release-with-dirs/*/* release/
-
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ needs.build.outputs.tag }}
-        files: release/*
-        draft: false
-        prerelease: false
