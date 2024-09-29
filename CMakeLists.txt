@@ -2,7 +2,14 @@
 cmake_minimum_required(VERSION 3.27)
 project(StrokkMC)
 
-add_executable(StrokkMC src/main.cpp)
+add_executable(StrokkMC src/game.cpp
+        src/game.h
+        src/world_info.h
+        src/block.h
+        src/render/abstract_renderer.h
+        src/render/opengl_renderer.h
+        src/chunk.h
+        src/blocks.h)
 
 set(CMAKE_CXX_STANDARD 23)
 set_target_properties(StrokkMC
