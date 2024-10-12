@@ -54,6 +54,10 @@ jobs:
             file(APPEND "$ENV{GITHUB_OUTPUT}" "tag=${{github.run_id}}\n")
         endif()
 
+    - name: Download wayland libs
+      if: runner.os == 'Linux'
+      run: "sudo apt-get update && sudo apt-get install libwayland-dev libxkbcommon-dev xorg-dev"
+
     - name: Download Ninja and CMake
       shell: cmake -P {0}
       run: |
@@ -70,7 +74,6 @@ jobs:
           set(ninja_suffix "linux.zip")
           set(cmake_suffix "linux-x86_64.tar.gz")
           set(cmake_dir "cmake-${cmake_version}-linux-x86_64/bin")
-          execute_process(COMMAND sudo apt-get install libwayland-dev libxkbcommon-dev xorg-dev)
         elseif ("${{ runner.os }}" STREQUAL "macOS")
           set(ninja_suffix "mac.zip")
           set(cmake_suffix "macos-universal.tar.gz")
