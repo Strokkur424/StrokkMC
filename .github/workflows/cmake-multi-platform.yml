@@ -56,7 +56,7 @@ jobs:
 
     - name: Download wayland libs
       if: runner.os == 'Linux'
-      run: "sudo apt-get update && sudo apt-get install libwayland-dev libxkbcommon-dev xorg-dev libglew-dev"
+      run: "sudo apt-get update && sudo apt-get upgrade && sudo apt-get install libwayland-dev libxkbcommon-dev xorg-dev libglew-dev"
 
     - name: Download Ninja and CMake
       shell: cmake -P {0}
