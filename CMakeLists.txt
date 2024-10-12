@@ -10,7 +10,15 @@ add_executable(StrokkMC src/game.cpp
         src/files.h
         src/files.h
         src/shader.cpp
-        src/files.cpp)
+        src/files.cpp
+        src/vendor/stb_image.h
+        src/vendor/stb_image.cpp
+        src/texture.h
+        src/texture.cpp
+        src/vertexarray.h
+        src/vertexarray.cpp
+        src/elementbuffer.cpp
+        src/elementbuffer.h)
 
 set(CMAKE_CXX_STANDARD 23)
 set_target_properties(StrokkMC

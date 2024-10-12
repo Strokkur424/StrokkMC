@@ -1,79 +1,162 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <game.h>
 
 #include <cstdio>
-#include <shader.h>
 
-float vertices[] = {
-        0.5f, 0.5f,
-        -0.5f, -0.5f,
-        -0.5f, 0.5f,
-        0.5f, -0.5f
+#include <shader.h>
+#include <texture.h>
+#include <vertexarray.h>
+#include <elementbuffer.h>
+
+std::vector<float> vertices = { /*
+          x      y  |  r     g     b  |  u     v   */// Layout
+        -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top Left
+        0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,    // Bottom Right
+        -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,   // Bottom Left
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f    // Top Right
 };
+
+float texcoords[] = {
+        0.0f, 0.0f, // lower-left
+        1.0f, 0.0f, // lower-right
+        0.0f, 1.0f, // top-left
+        1.0f, 1.0f, // top-right
+};
+
+std::vector<uint32_t> indices = {
+        2, 0, 3,
+        3, 1, 2
+};
+
+bool render_wireframe = false;
+GLFWwindow* glfwWindow;
+
+StrokkShader* shader = nullptr;
+VertexArray* vertexArray = nullptr;
+
+ElementBuffer* elementBuffer;
+
+Texture* texContainer;
+Texture* texFace;
 
 int main()
 {
-    GLFWwindow *window;
+    if (!init())
+    {
+        return -1;
+    }
 
+    initBuffers();
+
+    while (!glfwWindowShouldClose(glfwWindow))
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        render();
+
+        glfwSwapBuffers(glfwWindow);
+        glfwPollEvents();
+    }
+
+    cleanup();
+    glfwTerminate();
+}
+
+
+bool init()
+{
     /* Initialize the library */
     if (!glfwInit())
     {
         printf("Failed to init glfw!\n");
-        return -1;
+        return false;
     }
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
-    if (!window)
+    /* Create a windowed mode glfwWindow and its OpenGL context */
+    glfwWindow = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
+    if (!glfwWindow)
     {
         glfwTerminate();
-        return -1;
+        return false;
     }
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(glfwWindow);
+    glfwSetFramebufferSizeCallback(glfwWindow, framebufferSizeCallback);
+    glfwSetKeyCallback(glfwWindow, inputCallback);
 
     GLenum glewErr = glewInit();
     if (glewErr != GLEW_OK)
     {
         printf("Failed to init glew: %s\n", glewGetErrorString(glewErr));
-        return -1;
+        return false;
     }
 
-    uint32_t program = StrokkShaders::createProgram("assets/basic.vert", "assets/basic.frag");
+    /* Make the glfwWindow's context current */
+    glfwMakeContextCurrent(glfwWindow);
 
-    uint32_t vbo;
-    glGenBuffers(1, &vbo);
+    return true;
+}
 
-    uint32_t vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+void initBuffers()
+{
+    shader = new StrokkShader("assets/basic.vert", "assets/basic.frag");
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glUseProgram(program);
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
+        VertexArrayBuilder<float> builder;
+        builder.addAttribute(2);
+        builder.addAttribute(3);
+        builder.addAttribute(2);
+        vertexArray = builder.build(&vertices, GL_STATIC_DRAW);
     }
 
-    glfwTerminate();
+    // Element buffer
+    elementBuffer = new ElementBuffer(&indices);
+
+    // Textures
+    texContainer = new Texture("assets/textures/container.jpg");
+    texFace = new Texture("assets/textures/awesomeface.png", true);
+
+    shader->uniform("texture1", 0);
+    shader->uniform("texture2", 1);
+}
+
+void render()
+{
+    if (render_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    texContainer->bindActive(0);
+    texFace->bindActive(1);
+
+    shader->bind();
+    vertexArray->bindVertexArray();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+void cleanup()
+{
+    delete shader;
+
+    delete texContainer;
+    delete texFace;
+
+    delete vertexArray;
+}
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void inputCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_W && action == GLFW_PRESS)
+    {
+        render_wireframe = !render_wireframe;
+    }
 }
